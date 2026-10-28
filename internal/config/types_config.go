@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -18,33 +17,37 @@ func Read() (*Config, error) {
 		return &Config{}, err
 	}
 
-	data, err := os.ReadFile(configFileLocation)
+	file, err := os.Open(configFileLocation)
 	if err != nil {
 		return &Config{}, err
 	}
 
-	var theConfig Config
+	defer file.Close()
 
-	if err := json.Unmarshal(data, &theConfig); err != nil {
+	decoder := json.NewDecoder(file)
+	theConfig := Config{}
+	err = decoder.Decode(&theConfig)
+	if err != nil {
 		return &Config{}, err
 	}
 
 	return &theConfig, nil
 }
 
-func (cfg *Config) SetUser(userName string) {
+func (cfg *Config) SetUser(userName string) error {
 	cfg.Current_Username = userName
-	err := writeConfig(*cfg)
+	err := writeConfig(*cfg) // takes the dereferenced data, cfg is not mutated
 	if err != nil {
-		fmt.Printf("Error writing file: %v", err)
+		return err
 	}
 
+	return nil
 }
 
 func getConfigPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", fmt.Errorf("Error determining user home directory: %w", err)
+		return "", err
 	}
 
 	configFileLocation := filepath.Join(homeDir, configFileName)
@@ -58,12 +61,18 @@ func writeConfig(cfg Config) error {
 		return err
 	}
 
-	newConfigData, err := json.Marshal(cfg)
+	file, err := os.Create(configFileLocation) // creates the file if it doesn't exist
 	if err != nil {
-		fmt.Printf("Error marshaling data: %v", err)
+		return err
 	}
-	if err := os.WriteFile(configFileLocation, newConfigData, 0666); err != nil {
-		return fmt.Errorf("Error writing config with new userName: %w", err)
+
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(cfg)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }

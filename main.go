@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/BooperDCSS/aggreGator/internal/config"
 )
@@ -9,15 +10,15 @@ import (
 func main() {
 	theConfig, err := config.Read()
 	if err != nil {
-		fmt.Printf("Error reading config file: %v", err)
+		log.Fatalf("Error reading config file: %v", err)
 	}
 
 	theConfig.SetUser("booper")
 
-	updatedConfig, err := config.Read()
+	theConfig, err = config.Read()
 	if err != nil {
-		fmt.Printf("Error reasding updated config: %v", err)
+		log.Fatalf("Error reading updated config: %v", err)
 	}
-	fmt.Printf("Current DB URL: %s -- Current Username: %s\n", updatedConfig.Db_url, updatedConfig.Current_Username)
+	fmt.Printf("Updated config: %+v", theConfig)
 
 }

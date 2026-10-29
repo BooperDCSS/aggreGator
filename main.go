@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -14,29 +13,26 @@ func main() {
 		log.Fatalf("Error reading config file: %v", err)
 	}
 
-	theState := &state{
+	programState := &state{
 		conf: theConfig,
 	}
 
-	theCommands := &commands{
+	allCommands := &commands{
 		commandList: make(map[string]func(*state, command) error),
 	}
-	theCommands.register("login", handlerLogin)
+	allCommands.register("login", handlerLogin)
 
-	theArgs := os.Args
-	if len(theArgs) < 2 {
-		log.Fatalf("Too few arguments provided by user; must supply at least a command name.")
+	if len(os.Args) < 2 {
+		log.Fatal("Too few arguments provided by user; must supply at least a command name.")
 	}
 
-	commandInstance := command{
-		name:      theArgs[1],
-		arguments: theArgs[2:],
-	}
+	cmdName := os.Args[1]
+	cmdArgs := os.Args[2:]
 
-	err = theCommands.run(theState, commandInstance)
+	// using a struct literal for the command argument
+	err = allCommands.run(programState, command{name: cmdName, arguments: cmdArgs})
 	if err != nil {
-		fmt.Printf("Encountered an error: %v\n", err)
-		os.Exit(1)
+		log.Fatal(err) // this produces exit status code 1
 	}
 
 }

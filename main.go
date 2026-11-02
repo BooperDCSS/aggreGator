@@ -1,10 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
 	"github.com/BooperDCSS/aggreGator/internal/config"
+	"github.com/BooperDCSS/aggreGator/internal/database"
+	_ "github.com/lib/pq" // using it for side effects, not directly
 )
 
 func main() {
@@ -13,7 +16,11 @@ func main() {
 		log.Fatalf("Error reading config file: %v", err)
 	}
 
+	db, err := sql.Open("postgres", theConfig.Db_url)
+	dbQueries := database.New(db)
+
 	programState := &state{
+		db:   dbQueries,
 		conf: theConfig,
 	}
 
@@ -21,6 +28,7 @@ func main() {
 		commandList: make(map[string]func(*state, command) error),
 	}
 	allCommands.register("login", handlerLogin)
+	allCommands.register("register", handlerRegister)
 
 	if len(os.Args) < 2 {
 		log.Fatal("Too few arguments provided by user; must supply at least a command name.")
@@ -32,7 +40,7 @@ func main() {
 	// using a struct literal for the command argument
 	err = allCommands.run(programState, command{name: cmdName, arguments: cmdArgs})
 	if err != nil {
-		log.Fatal(err) // this produces exit status code 1
+		log.Fatalf("Encountered error: %v", err) // this produces exit status code 1
 	}
 
 }

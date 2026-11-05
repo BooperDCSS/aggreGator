@@ -18,6 +18,7 @@ func main() {
 
 	db, err := sql.Open("postgres", theConfig.Db_url)
 	dbQueries := database.New(db)
+	defer db.Close()
 
 	programState := &state{
 		db:   dbQueries,
@@ -29,6 +30,8 @@ func main() {
 	}
 	allCommands.register("login", handlerLogin)
 	allCommands.register("register", handlerRegister)
+	allCommands.register("reset", handlerReset)
+	allCommands.register("users", handlerListUsers)
 
 	if len(os.Args) < 2 {
 		log.Fatal("Too few arguments provided by user; must supply at least a command name.")

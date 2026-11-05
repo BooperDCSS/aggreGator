@@ -2,16 +2,14 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/BooperDCSS/aggreGator/internal/database"
 	"github.com/google/uuid"
 )
 
-// this represents the function signature for all command "handlers"
+// uses s.conf.SetUser to change current user
 func handlerLogin(s *state, cmd command) error {
 	if len(cmd.arguments) != 1 {
 		return fmt.Errorf("Provide a single argument for the login command. Usage: %s <arg>", cmd.name)
@@ -19,7 +17,7 @@ func handlerLogin(s *state, cmd command) error {
 
 	_, err := s.db.GetUser(context.Background(), cmd.arguments[0])
 	if err != nil {
-		log.Fatalf("User %q does not exist in database", cmd.arguments[0])
+		return fmt.Errorf("User %q does not exist in database", cmd.arguments[0])
 	}
 
 	err = s.conf.SetUser(cmd.arguments[0])
@@ -30,6 +28,7 @@ func handlerLogin(s *state, cmd command) error {
 	return nil
 }
 
+// creates and sets a new user as the current user
 func handlerRegister(s *state, cmd command) error {
 	if len(cmd.arguments) != 1 {
 		return fmt.Errorf("Provide a single argument for the register command. Usage: %s <arg>", cmd.name)
@@ -57,17 +56,39 @@ func handlerRegister(s *state, cmd command) error {
 
 }
 
-func (c *commands) run(s *state, cmd command) error {
-	requestedFunction, ok := c.commandList[cmd.name]
-	if !ok {
-		return errors.New("That function does not exist")
+// resets database, removing all users
+func handlerReset(s *state, cmd command) error {
+	if len(cmd.arguments) > 0 {
+		return fmt.Errorf("No argument required for resetting the user database")
 	}
 
-	// no need to check err again since this function always checks and returns errors anyway
-	// this will either return the error or return nil
-	return requestedFunction(s, cmd)
+	err := s.db.ResetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("'users' database successfully reset. All users removed.")
+	return nil
 }
 
-func (c *commands) register(name string, f func(*state, command) error) {
-	c.commandList[name] = f
+// lists all users currently in the database; indicates which is the current user in the config
+func handlerListUsers(s *state, cmd command) error {
+	if len(cmd.arguments) > 0 {
+		return fmt.Errorf("No argument required for listing all users.")
+	}
+
+	userList, err := s.db.ListUsers(context.Background())
+	if err != nil {
+		return fmt.Errorf("Error retrieving user from database: %w", err)
+	}
+
+	for _, user := range userList {
+		if user == s.conf.Current_Username {
+			fmt.Printf("* %s (current)\n", user)
+		} else {
+			fmt.Printf("* %s\n", user)
+		}
+	}
+
+	return nil
 }

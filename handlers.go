@@ -92,3 +92,19 @@ func handlerListUsers(s *state, cmd command) error {
 
 	return nil
 }
+
+func handlerFetch(s *state, cmd command) error {
+
+	if len(cmd.arguments) > 0 {
+		return fmt.Errorf("No argument required for the aggregator command.")
+	}
+
+	feed, err := fetchFeed(context.Background(), s.target)
+	if err != nil {
+		return fmt.Errorf("Error fetching XML from target: %w", err)
+	}
+
+	cleanStringsRSS(feed)
+
+	return nil
+}

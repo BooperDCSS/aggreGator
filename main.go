@@ -21,8 +21,9 @@ func main() {
 	defer db.Close()
 
 	programState := &state{
-		db:   dbQueries,
-		conf: theConfig,
+		db:     dbQueries,
+		conf:   theConfig,
+		target: "https://www.wagslane.dev/index.xml",
 	}
 
 	allCommands := &commands{
@@ -32,6 +33,7 @@ func main() {
 	allCommands.register("register", handlerRegister)
 	allCommands.register("reset", handlerReset)
 	allCommands.register("users", handlerListUsers)
+	allCommands.register("agg", handlerFetch)
 
 	if len(os.Args) < 2 {
 		log.Fatal("Too few arguments provided by user; must supply at least a command name.")

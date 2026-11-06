@@ -1,6 +1,8 @@
 package main
 
-import "errors"
+import (
+	"errors"
+)
 
 func (c *commands) run(s *state, cmd command) error {
 	requestedFunction, ok := c.commandList[cmd.name]

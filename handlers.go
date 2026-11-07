@@ -94,17 +94,20 @@ func handlerListUsers(s *state, cmd command) error {
 }
 
 func handlerFetch(s *state, cmd command) error {
-
 	if len(cmd.arguments) > 0 {
 		return fmt.Errorf("No argument required for the aggregator command.")
 	}
 
-	feed, err := fetchFeed(context.Background(), s.target)
+	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
 	if err != nil {
 		return fmt.Errorf("Error fetching XML from target: %w", err)
 	}
 
-	cleanStringsRSS(feed)
+	fmt.Printf("Channel Title: %v\nChannel Desc: %v\n\n", feed.Channel.Title, feed.Channel.Description)
+	for _, item := range feed.Channel.Item {
+		fmt.Printf("Title: %v\nDesc: %v\nLink: %v\nPubDate: %v\n\n",
+			item.Title, item.Description, item.Link, item.PubDate)
+	}
 
 	return nil
 }

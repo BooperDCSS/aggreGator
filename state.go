@@ -6,7 +6,6 @@ import (
 )
 
 type state struct {
-	db     *database.Queries
-	conf   *config.Config
-	target string
+	db   *database.Queries
+	conf *config.Config
 }

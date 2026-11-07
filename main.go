@@ -21,9 +21,8 @@ func main() {
 	defer db.Close()
 
 	programState := &state{
-		db:     dbQueries,
-		conf:   theConfig,
-		target: "https://www.wagslane.dev/index.xml",
+		db:   dbQueries,
+		conf: theConfig,
 	}
 
 	allCommands := &commands{
@@ -40,7 +39,7 @@ func main() {
 	}
 
 	cmdName := os.Args[1]
-	cmdArgs := os.Args[2:]
+	cmdArgs := os.Args[2:] // as long as len(os.Args) >= 2, this resolves appropriately
 
 	// using a struct literal for the command argument
 	err = allCommands.run(programState, command{name: cmdName, arguments: cmdArgs})

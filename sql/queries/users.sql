@@ -13,6 +13,11 @@ RETURNING *;
 SELECT * FROM users
 WHERE name = $1;
 
+-- name: NameFromID :one
+
+SELECT name FROM users
+WHERE id= $1;
+
 -- name: ListUsers :many
 
 SELECT name FROM users;

@@ -93,6 +93,7 @@ func handlerListUsers(s *state, cmd command) error {
 	return nil
 }
 
+// fetches a feed -- right now uses a hardcoded url
 func handlerFetch(s *state, cmd command) error {
 	if len(cmd.arguments) > 0 {
 		return fmt.Errorf("No argument required for the aggregator command.")
@@ -107,6 +108,57 @@ func handlerFetch(s *state, cmd command) error {
 	for _, item := range feed.Channel.Item {
 		fmt.Printf("Title: %v\nDesc: %v\nLink: %v\nPubDate: %v\n\n",
 			item.Title, item.Description, item.Link, item.PubDate)
+	}
+
+	return nil
+}
+
+func handlerAddFeed(s *state, cmd command) error {
+	if len(cmd.arguments) != 2 {
+		return fmt.Errorf("Add a feed by supplying its name and URL: Usage %s <name> <url>", cmd.name)
+	}
+
+	currentUsername := s.conf.Current_Username
+	currentUser, err := s.db.GetUser(context.Background(), currentUsername)
+	if err != nil {
+		return err
+	}
+
+	feedParams := database.CreateFeedParams{
+		ID:        uuid.New(),
+		Name:      cmd.arguments[0],
+		Url:       cmd.arguments[1],
+		UserID:    currentUser.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	feed, err := s.db.CreateFeed(context.Background(), feedParams)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Feed added: %+v", feed)
+	return nil
+
+}
+
+func handlerListFeeds(s *state, cmd command) error {
+	if len(cmd.arguments) != 0 {
+		return fmt.Errorf("No arguments required when retrieving list of feeds.")
+	}
+
+	feedList, err := s.db.GetFeeds(context.Background())
+	if err != nil {
+		return fmt.Errorf("Error retrieving feeds in database: %w", err)
+	}
+
+	for i, feed := range feedList {
+		creator, err := s.db.NameFromID(context.Background(), feed.UserID)
+		if err != nil {
+			return fmt.Errorf("Error identifying feed creator: %w", err)
+		}
+		fmt.Printf("Feed #%v\nFeed Name: %s\nFeed URL: %s\nFeed creator: %s\n\n", i+1, feed.Name, feed.Url, creator)
 	}
 
 	return nil

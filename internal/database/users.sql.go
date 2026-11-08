@@ -92,3 +92,16 @@ func (q *Queries) ListUsers(ctx context.Context) ([]string, error) {
 	}
 	return items, nil
 }
+
+const nameFromID = `-- name: NameFromID :one
+
+SELECT name FROM users
+WHERE id= $1
+`
+
+func (q *Queries) NameFromID(ctx context.Context, id uuid.UUID) (string, error) {
+	row := q.db.QueryRowContext(ctx, nameFromID, id)
+	var name string
+	err := row.Scan(&name)
+	return name, err
+}

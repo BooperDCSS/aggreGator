@@ -13,5 +13,6 @@ CREATE TABLE feeds (
         ON DELETE CASCADE
 );
 
+
 -- +goose Down
 DROP TABLE feeds;

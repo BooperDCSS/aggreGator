@@ -93,7 +93,7 @@ func handlerListUsers(s *state, cmd command) error {
 	return nil
 }
 
-// fetches a feed -- right now uses a hardcoded url
+// fetches a feed -- uses a hardcoded url; can probably be deleted
 func handlerFetch(s *state, cmd command) error {
 	if len(cmd.arguments) > 0 {
 		return fmt.Errorf("No argument required for the aggregator command.")
@@ -113,6 +113,7 @@ func handlerFetch(s *state, cmd command) error {
 	return nil
 }
 
+// adds a feed to the database, associated with the current user using feed_follows table
 func handlerAddFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.arguments) != 2 {
 		return fmt.Errorf("Add a feed by supplying its name and URL: Usage %s <name> <url>", cmd.name)
@@ -150,6 +151,7 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 
 }
 
+// lists all feeds, their urls, and who created them
 func handlerListFeeds(s *state, cmd command) error {
 	if len(cmd.arguments) != 0 {
 		return fmt.Errorf("No arguments required when retrieving list of feeds.")
@@ -171,6 +173,7 @@ func handlerListFeeds(s *state, cmd command) error {
 	return nil
 }
 
+// allows current user to follow a feed that already exists in the db
 func handlerFollowFeed(s *state, cmd command, user database.User) error {
 	if len(cmd.arguments) != 1 {
 		return fmt.Errorf("Must provide URL feed to follow. Usaage: %s <url>", cmd.name)
@@ -194,6 +197,7 @@ func handlerFollowFeed(s *state, cmd command, user database.User) error {
 	return nil
 }
 
+// finds the feeds associated with the current user
 func handlerCurrentUserFeeds(s *state, cmd command, user database.User) error {
 	if len(cmd.arguments) != 0 {
 		return fmt.Errorf("No arguments are required when listing the current users feeds.")
@@ -208,6 +212,32 @@ func handlerCurrentUserFeeds(s *state, cmd command, user database.User) error {
 	for _, feed := range feedsList {
 		fmt.Printf("%s\n", feed)
 	}
+
+	return nil
+}
+
+// deletes a followed feed using the current user and the feed ID
+func handlerDeleteFeedFollow(s *state, cmd command, user database.User) error {
+	if len(cmd.arguments) != 1 {
+		return fmt.Errorf("Provide the URL follow you wish to delete for current user. Usage %s <url>", cmd.name)
+	}
+
+	urlFeedID, err := s.db.IDFromURL(context.Background(), cmd.arguments[0])
+	if err != nil {
+		return fmt.Errorf("Error retrieving feed ID for delete: %w", err)
+	}
+
+	deleteParams := database.DeleteFeedFollowParams{
+		UserID: user.ID,
+		FeedID: urlFeedID,
+	}
+
+	err = s.db.DeleteFeedFollow(context.Background(), deleteParams)
+	if err != nil {
+		return fmt.Errorf("Error deleting feed follow for current user: %w", err)
+	}
+
+	fmt.Printf("User %q successfully removed %q from follows", s.conf.Current_Username, cmd.arguments[0])
 
 	return nil
 }

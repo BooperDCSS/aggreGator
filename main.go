@@ -33,10 +33,11 @@ func main() {
 	allCommands.register("reset", handlerReset)
 	allCommands.register("users", handlerListUsers)
 	allCommands.register("agg", handlerFetch)
-	allCommands.register("addfeed", handlerAddFeed)
+	allCommands.register("addfeed", middlewareLoggedIn(handlerAddFeed))
 	allCommands.register("feeds", handlerListFeeds)
-	allCommands.register("follow", handlerFollowFeed)
-	allCommands.register("following", handlerCurrentUserFeeds)
+	allCommands.register("follow", middlewareLoggedIn(handlerFollowFeed))
+	allCommands.register("following", middlewareLoggedIn(handlerCurrentUserFeeds))
+	allCommands.register("unfollow", middlewareLoggedIn(handlerDeleteFeedFollow))
 
 	if len(os.Args) < 2 {
 		log.Fatal("Too few arguments provided by user; must supply at least a command name.")

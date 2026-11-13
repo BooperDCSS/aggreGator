@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -101,7 +100,7 @@ func handlerFetch(s *state, cmd command) error {
 	}
 
 	time_between_reqs, _ := time.ParseDuration(cmd.arguments[0])
-	fmt.Printf("Collecting feeds every %v", time_between_reqs)
+	fmt.Printf("Collecting feeds every %v\n\n", time_between_reqs)
 
 	ticker := time.NewTicker(time_between_reqs)
 
@@ -113,7 +112,7 @@ func handlerFetch(s *state, cmd command) error {
 		}
 	}
 
-	return errors.New("Process stopped or error encountered. Check stdout for details.")
+	return nil
 }
 
 // adds a feed to the database, associated with the current user using feed_follows table

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -93,24 +94,26 @@ func handlerListUsers(s *state, cmd command) error {
 	return nil
 }
 
-// fetches a feed -- uses a hardcoded url; can probably be deleted
+// fetches feeds using the scrapeFeeds function and a time interval defined by the user
 func handlerFetch(s *state, cmd command) error {
-	if len(cmd.arguments) > 0 {
-		return fmt.Errorf("No argument required for the aggregator command.")
+	if len(cmd.arguments) != 1 {
+		return fmt.Errorf("Enter a time duration to schedule regular RSS scraping. Usage %s <1m or 30s, etc.>", cmd.name)
 	}
 
-	feed, err := fetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
-	if err != nil {
-		return fmt.Errorf("Error fetching XML from target: %w", err)
+	time_between_reqs, _ := time.ParseDuration(cmd.arguments[0])
+	fmt.Printf("Collecting feeds every %v", time_between_reqs)
+
+	ticker := time.NewTicker(time_between_reqs)
+
+	for ; ; <-ticker.C {
+		err := s.scrapeFeeds()
+		if err != nil {
+			fmt.Printf("Error encountered during 'agg' process: %v", err)
+			break
+		}
 	}
 
-	fmt.Printf("Channel Title: %v\nChannel Desc: %v\n\n", feed.Channel.Title, feed.Channel.Description)
-	for _, item := range feed.Channel.Item {
-		fmt.Printf("Title: %v\nDesc: %v\nLink: %v\nPubDate: %v\n\n",
-			item.Title, item.Description, item.Link, item.PubDate)
-	}
-
-	return nil
+	return errors.New("Process stopped or error encountered. Check stdout for details.")
 }
 
 // adds a feed to the database, associated with the current user using feed_follows table

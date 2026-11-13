@@ -58,3 +58,22 @@ WHERE
     feed_follows.user_id = $1
     AND
     feed_follows.feed_id = $2;
+
+-- name: MarkFeedFetched :exec
+
+UPDATE
+    feed_follows
+SET
+    updated_at = transaction_timestamp(),
+    last_fetched_at = transaction_timestamp()
+WHERE
+    feed_id = $1;
+
+-- name: GetNextFeedToFetch :one
+
+SELECT
+    url
+FROM feeds
+    INNER JOIN feed_follows ON feeds.id = feed_follows.feed_id
+ORDER BY
+    feed_follows.last_fetched_at NULLS FIRST;

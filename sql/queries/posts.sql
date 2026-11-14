@@ -16,13 +16,14 @@ RETURNING *;
 -- name: GetPostsForUser :many
 
 SELECT
-    posts.tile AS post_title,
-    posts.url AS post_url
+    posts.title AS post_title,
+    posts.url AS post_url,
+    posts.description AS post_description
 FROM posts
-    INNER JOIN feeds_follows ON posts.feed_id = feeds_follows.feed_id
+    INNER JOIN feed_follows ON posts.feed_id = feed_follows.feed_id
 WHERE
-    feeds_follows.user_id = $1
-LIMIT
-    $2
+    feed_follows.user_id = $1
 ORDER BY
-    posts.published_at DESC;
+    posts.published_at DESC
+LIMIT
+    $2;

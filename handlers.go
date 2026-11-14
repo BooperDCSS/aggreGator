@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -112,6 +113,10 @@ func handlerFetch(s *state, cmd command) error {
 		}
 	}
 
+	return errors.New("Process stopped or error encountered. Check stdout for details.")
+}
+
+func handlerBrowse(s *state, cmd command) error {
 	return nil
 }
 

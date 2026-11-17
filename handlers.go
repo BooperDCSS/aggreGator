@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/BooperDCSS/aggreGator/internal/database"
@@ -25,7 +26,7 @@ func handlerLogin(s *state, cmd command) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("User set successfully: %v\n", s.conf.Current_Username)
+	fmt.Printf("User %q set as current user\n", s.conf.Current_Username)
 	return nil
 }
 
@@ -52,7 +53,7 @@ func handlerRegister(s *state, cmd command) error {
 		return err
 	}
 
-	fmt.Printf("User %s created.\nNew user: %+v", cmd.arguments[0], registeredUser)
+	fmt.Printf("User created.\nName: %v\nID: %v\n", registeredUser.Name, registeredUser.ID)
 	return nil
 
 }
@@ -116,8 +117,47 @@ func handlerFetch(s *state, cmd command) error {
 	return errors.New("Process stopped or error encountered. Check stdout for details.")
 }
 
-func handlerBrowse(s *state, cmd command) error {
-	return nil
+// prints post titles and descriptions for current user to terminal
+func handlerBrowse(s *state, cmd command, user database.User) error {
+	switch len(cmd.arguments) {
+	case 1:
+		postCount, err := strconv.Atoi(cmd.arguments[0])
+		if err != nil {
+			return fmt.Errorf("Provide the number of posts to retrieve. Usage: %v <digit>", cmd.name)
+		}
+
+		retrievePostsCustomParams := database.GetPostsForUserParams{
+			UserID: user.ID,
+			Limit:  int32(postCount),
+		}
+
+		postListCustom, err := s.db.GetPostsForUser(context.Background(), retrievePostsCustomParams)
+		if err != nil {
+			return fmt.Errorf("Error getting posts for current user with custom params: %w", err)
+		}
+
+		for _, post := range postListCustom {
+			fmt.Printf("Title: %v\nPublished: %v\nURL: %v\nDescription: %v\n\n",
+				post.PostTitle, post.PostPub.Time, post.PostUrl, post.PostDescription.String)
+		}
+		return nil
+
+	default:
+		retrievePostsDefaultParams := database.GetPostsForUserParams{
+			UserID: user.ID,
+			Limit:  2,
+		}
+		postList, err := s.db.GetPostsForUser(context.Background(), retrievePostsDefaultParams)
+		if err != nil {
+			return fmt.Errorf("Error getting posts for current user: %w", err)
+		}
+		for _, post := range postList {
+			fmt.Printf("Title: %v\nPublished: %v\nURL: %v\nDescription: %v\n\n",
+				post.PostTitle, post.PostPub.Time, post.PostUrl, post.PostDescription.String)
+		}
+		return nil
+
+	}
 }
 
 // adds a feed to the database, associated with the current user using feed_follows table
@@ -153,7 +193,7 @@ func handlerAddFeed(s *state, cmd command, user database.User) error {
 		return fmt.Errorf("Error generating feed follow during AddFeed operation: %w", err)
 	}
 
-	fmt.Printf("Feed added: %+v", feed)
+	fmt.Printf("Feed added by %s.\nName: %v\nURL: %v\nFeed ID: %v\n", user.Name, feed.Name, feed.Url, feed.ID)
 	return nil
 
 }
@@ -215,9 +255,9 @@ func handlerCurrentUserFeeds(s *state, cmd command, user database.User) error {
 		return fmt.Errorf("Error retrieving list of feeds for current user: %w", err)
 	}
 
-	fmt.Printf("Feed follows for %s:\n\n", s.conf.Current_Username)
+	fmt.Printf("Feeds followed by %s:\n\n", s.conf.Current_Username)
 	for _, feed := range feedsList {
-		fmt.Printf("%s\n", feed)
+		fmt.Printf("* %s\n", feed)
 	}
 
 	return nil
@@ -244,7 +284,7 @@ func handlerDeleteFeedFollow(s *state, cmd command, user database.User) error {
 		return fmt.Errorf("Error deleting feed follow for current user: %w", err)
 	}
 
-	fmt.Printf("User %q successfully removed %q from follows", s.conf.Current_Username, cmd.arguments[0])
+	fmt.Printf("Successfully removed %q from feeds for user %q", cmd.arguments[0], s.conf.Current_Username)
 
 	return nil
 }

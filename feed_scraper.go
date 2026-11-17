@@ -33,7 +33,7 @@ func (s *state) scrapeFeeds() error {
 		return fmt.Errorf("Error fetching feed during scrape: %w", err)
 	}
 
-	fmt.Printf("Storing posts from %q in database\n", rssFeed.Channel.Title)
+	fmt.Printf("***** Storing posts from %q in database *****\n", rssFeed.Channel.Title)
 	err = s.storePostInDB(rssFeed, feedID)
 	if err != nil {
 		return fmt.Errorf("Error storing posts in database: %w", err)
@@ -61,12 +61,10 @@ func (s *state) storePostInDB(rssFeed *RSSFeed, feedID uuid.UUID) error {
 			FeedID:      feedID,
 		}
 
-		var pqError *pq.Error
-
 		_, err = s.db.CreatePost(context.Background(), postData)
-		if errors.As(err, &pqError) {
+		if pqError, ok := errors.AsType[*pq.Error](err); ok {
 			if pqError.Code == pqerror.UniqueViolation {
-				fmt.Printf("%q already in database, skipping post.\n\n", postData.Url)
+				fmt.Printf("NOTICE ---> %q already in database, skipping post.\n\n", postData.Title)
 				continue
 			} else {
 				return fmt.Errorf("pq error encountered: %w", err)

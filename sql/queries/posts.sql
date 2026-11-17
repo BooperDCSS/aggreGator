@@ -18,7 +18,8 @@ RETURNING *;
 SELECT
     posts.title AS post_title,
     posts.url AS post_url,
-    posts.description AS post_description
+    posts.description AS post_description,
+    posts.published_at AS post_pub
 FROM posts
     INNER JOIN feed_follows ON posts.feed_id = feed_follows.feed_id
 WHERE

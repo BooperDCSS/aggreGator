@@ -38,6 +38,7 @@ func main() {
 	allCommands.register("follow", middlewareLoggedIn(handlerFollowFeed))
 	allCommands.register("following", middlewareLoggedIn(handlerCurrentUserFeeds))
 	allCommands.register("unfollow", middlewareLoggedIn(handlerDeleteFeedFollow))
+	allCommands.register("browse", middlewareLoggedIn(handlerBrowse))
 
 	if len(os.Args) < 2 {
 		log.Fatal("Too few arguments provided by user; must supply at least a command name.")

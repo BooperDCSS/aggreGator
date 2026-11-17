@@ -70,7 +70,8 @@ const getPostsForUser = `-- name: GetPostsForUser :many
 SELECT
     posts.title AS post_title,
     posts.url AS post_url,
-    posts.description AS post_description
+    posts.description AS post_description,
+    posts.published_at AS post_pub
 FROM posts
     INNER JOIN feed_follows ON posts.feed_id = feed_follows.feed_id
 WHERE
@@ -90,6 +91,7 @@ type GetPostsForUserRow struct {
 	PostTitle       string
 	PostUrl         string
 	PostDescription sql.NullString
+	PostPub         sql.NullTime
 }
 
 func (q *Queries) GetPostsForUser(ctx context.Context, arg GetPostsForUserParams) ([]GetPostsForUserRow, error) {
@@ -101,7 +103,12 @@ func (q *Queries) GetPostsForUser(ctx context.Context, arg GetPostsForUserParams
 	var items []GetPostsForUserRow
 	for rows.Next() {
 		var i GetPostsForUserRow
-		if err := rows.Scan(&i.PostTitle, &i.PostUrl, &i.PostDescription); err != nil {
+		if err := rows.Scan(
+			&i.PostTitle,
+			&i.PostUrl,
+			&i.PostDescription,
+			&i.PostPub,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
